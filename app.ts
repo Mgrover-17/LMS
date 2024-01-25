@@ -1,0 +1,45 @@
+require("dotenv").config();
+import express, { Request, Response, NextFunction } from "express";
+export const app = express();
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import {ErrorMiddleware} from "./middleware/error";
+import userRouter from "./routes/user_route";
+import courseRouter from "./routes/course_route";
+import orderRouter from "./routes/order_route";
+import notificationRouter from "./routes/notification_route";
+import analyticsRouter from "./routes/analytics_route";
+import layoutRouter from "./routes/layout_route";
+
+//body parser
+app.use(express.json({ limit: "50mb" }));
+
+//cookie parser
+app.use(cookieParser());
+
+//cors
+app.use(
+  cors({
+    origin: ['http://localhost:3000'],
+    credentials:true, 
+  })
+);
+
+//routes
+app.use("/api/v1/",userRouter, orderRouter, courseRouter, notificationRouter, analyticsRouter, layoutRouter);
+
+//testing api
+app.get("/test", (req: Request, res: Response, next: NextFunction) => {
+  res.status(200).json({
+    success: true,
+    message: "API is working",
+  });
+});
+
+app.all("*",(req: Request, res: Response, next: NextFunction)=>{
+    const err=new Error(`Route ${req.originalUrl} not found`) as any;
+    err.statusCode = 404;
+    next(err)
+});
+
+app.use(ErrorMiddleware);
